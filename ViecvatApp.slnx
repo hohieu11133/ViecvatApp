@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Shared.Core/Shared.Core.csproj" />
+    <Project Path="src/BuildingBlocks/Shared.Events/Shared.Events.csproj" />
+  </Folder>
+  <Folder Name="/src/Gateways/">
+    <Project Path="src/Gateways/ApiGateway/ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Service/">
+    <Project Path="src/Service/BookingService/BookingService.csproj" />
+    <Project Path="src/Service/ChatbotService/ChatbotService.csproj" />
+    <Project Path="src/Service/JobService/JobService.csproj" />
+    <Project Path="src/Service/NotifyService/NotifyService.csproj" />
+    <Project Path="src/Service/ReviewService/ReviewService.csproj" />
+    <Project Path="src/Service/UserService/UserService.csproj" />
+  </Folder>
+</Solution>

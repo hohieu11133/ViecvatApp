@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # 1. SQL Server (Chứa cả 6 Databases của bạn)
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: viecvat_sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=ViecVat@2026! # Mật khẩu chuẩn SA (Cần chữ hoa, thường, số, ký tự đặc biệt)
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433" # Mở cổng 1433 để Visual Studio kết nối vào
+    volumes:
+      - sqlserver_data:/var/opt/mssql # Giữ lại dữ liệu khi tắt Docker
+
+  # 2. Zookeeper (Thành phần quản lý bắt buộc của Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: viecvat_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # 3. Apache Kafka (Message Broker chính)
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: viecvat_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Cấu hình 2 luồng mạng: 1 cho Docker nội bộ (29092), 1 cho .NET ở máy thật (9092)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # 4. (BONUS) Kafdrop - Giao diện Web để xem tin nhắn Kafka
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: viecvat_kafdrop
+    depends_on:
+      - kafka
+    ports:
+      - "9000:9000" # Xem giao diện tại http://localhost:9000
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+
+  userservice:
+    image: viecvatapp-userservice:latest
+    build:
+      context: . 
+      dockerfile: src/Service/UserService/DockerFile # <-- SỬA CHỮ Service Ở ĐÂY
+    container_name: viecvat_userservice
+    depends_on:
+      - sqlserver
+      - kafka
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=db_user;User Id=sa;Password=ViecVat@2026!;TrustServerCertificate=True;
+      - Kafka__BootstrapServers=kafka:29092
+ 
+
+volumes:
+  sqlserver_data:

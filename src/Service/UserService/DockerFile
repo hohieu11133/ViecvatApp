@@ -1,0 +1,31 @@
+# 1. Base Image
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+WORKDIR /app
+EXPOSE 8080
+EXPOSE 8081
+
+# 2. Build Image
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# ĐÃ SỬA: 'Services' thành 'Service' ở các dòng COPY và RUN
+COPY ["src/Service/UserService/UserService.csproj", "src/Service/UserService/"]
+COPY ["src/BuildingBlocks/Shared.Core/Shared.Core.csproj", "src/BuildingBlocks/Shared.Core/"]
+COPY ["src/BuildingBlocks/Shared.Events/Shared.Events.csproj", "src/BuildingBlocks/Shared.Events/"]
+
+RUN dotnet restore "src/Service/UserService/UserService.csproj"
+
+COPY . .
+
+WORKDIR "/src/src/Service/UserService"
+RUN dotnet build "UserService.csproj" -c Release -o /app/build
+
+# 3. Publish
+FROM build AS publish
+RUN dotnet publish "UserService.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# 4. Final
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "UserService.dll"]
