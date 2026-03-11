@@ -98,11 +98,12 @@ namespace UserService.Controllers
 
             // Gói thông tin (Claims) vào trong Token
             var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
-                new Claim("phone", account.Phone),
-                new Claim("role", account.Role)
-            };
+        {
+            // Dùng chuẩn của Microsoft để gắn nhãn ID và Role
+            new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+            new Claim(ClaimTypes.MobilePhone, account.Phone),
+            new Claim(ClaimTypes.Role, account.Role)
+        };
 
             var token = new JwtSecurityToken(
                 issuer: "ViecVatApp",

@@ -18,5 +18,9 @@ namespace UserService.Entities
 
         [Required, MaxLength(20)]
         public string Status { get; set; } = "ACTIVE";
+      
+        [MaxLength(100)]
+        public string? FullName { get; set; }
+        public string? AvatarUrl { get; set; }
     }
 }
